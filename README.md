@@ -1,6 +1,9 @@
 puppet-git-hooks
 ================
 
+Project moved to https://github.com/gini/puppet-git-hooks
+
+
 githooks(5) scripts to work with repositories of Puppet code.
 
 
@@ -20,12 +23,6 @@ Hooks
 This pre-commit hook verifies that Puppet can parse \*.pp files (using ``puppet parser validate``),
 that the manifests conform to the [Puppet Labs style guide](http://docs.puppetlabs.com/guides/style_guide.html),
 and that templates (\*.erb) have valid syntax.
-
-
-Continuous Integration
-----------------------
-
-[![Build Status](https://secure.travis-ci.org/smarchive/puppet-git-hooks.png)](http://travis-ci.org/smarchive/puppet-git-hooks)
 
 
 License
