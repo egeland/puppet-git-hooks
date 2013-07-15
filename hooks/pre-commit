@@ -53,7 +53,6 @@ IFS="
 # Get a list of files changed in this transaction
 declare -a FILES
 FILES=$(git diff --cached --name-only --diff-filter=ACM "${revision}")
-
 for file in ${FILES[@]}
 do
     # Don't check empty files
@@ -85,6 +84,11 @@ do
                 if [[ $? -ne 0 ]] ; then
                     STATUS=2
                 fi
+
+                # Fix trailing whitespaces
+                echo "### Fixing whitespaces, if any, in ${file}" >&2
+                sed -i 's/[[:space:]]*$//' $file
+                git add $file
             ;;
     
             erb)
