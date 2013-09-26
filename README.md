@@ -1,6 +1,9 @@
 puppet-git-hooks
 ================
 
+Project moved to https://github.com/gini/puppet-git-hooks
+
+
 githooks(5) scripts to work with repositories of Puppet code.
 
 

@@ -1,21 +1,29 @@
 #!/bin/bash
 
-# External requirements:
+# Assumptions:
 #
-#    * Git
-#    * sed
-#    * Ruby with ERB and YAML support
-#    * Puppet >= 2.7
-#    * puppet-lint
-#
+#    Puppet >= 2.7 is installed on this machine
+#    puppet-lint is installed on this machine
+#    ERB is installed on this machine
+#    git is installed on this machine
+#    sed is installed on this machine
 #    Adjust LINTFLAGS as appropriate
 
 # Redirect output to stderr.
 exec 1>&2
 
-PUPPETLINT_FLAGS=${PUPPETLINT_FLAGS:-'--no-autoloader_layout-check --no-80chars-check'}
-TMPDIR=${TMPDIR:-'/tmp'}
-TMPFILE=$(mktemp "${TMPDIR}"/tmp.XXXXXXXXXX)
+PUPPETLINT_FLAGS=${PUPPETLINT_FLAGS:-"
+--no-autoloader_layout-check
+--no-80chars-check
+--no-2sp_soft_tabs-check
+--no-hard_tabs-check
+--no-nested_classes_or_defines-check
+--no-only_variable_string-check
+--error-level error
+--with-context
+--with-filename
+"}
+TMPFILE=$(mktemp /tmp/tmp.XXXXXXXXXX)
 STATUS=0
 
 # Register exit trap for removing temporary files
@@ -48,7 +56,6 @@ IFS="
 # Get a list of files changed in this transaction
 declare -a FILES
 FILES=$(git diff --cached --name-only --diff-filter=ACM "${revision}")
-
 for file in ${FILES[@]}
 do
     # Don't check empty files
@@ -80,17 +87,23 @@ do
                 if [[ $? -ne 0 ]] ; then
                     STATUS=2
                 fi
+
+                # Fix trailing whitespaces
+                echo "### Fixing whitespaces, if any, in ${file}" >&2
+                sed -i 's/[[:space:]]*$//' $file
+                git add $file
             ;;
     
             erb)
                 # syntax check templates - this doesn't catch a lot of mistakes,
                 # but it should catch gross mistakes
-                erb -x -T - "${TMPFILE}" | ruby -c >/dev/null 2>&1
+                erb -x -T - "${TMPFILE}" | ruby -c > /dev/null 2>&1
                 if [[ $? -ne 0 ]]; then
                     echo "ERB syntax error in ${file}" >&2
                     STATUS=2
                 fi
             ;;
+
             yml|yaml)
                 # syntax YAML files, https://ttboj.wordpress.com/2013/08/25/finding-yaml-errors-in-puppet/
                 ruby -ryaml -e "YAML.parse(File.open('${TMPFILE}'))" >/dev/null 2>&1
@@ -98,6 +111,10 @@ do
                     echo "YAML syntax error in ${file}" >&2
                     STATUS=2
                 fi
+            ;;
+
+            *)
+                echo "Skipping ${file}"
             ;;
         esac
     fi
